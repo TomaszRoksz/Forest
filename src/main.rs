@@ -1,7 +1,6 @@
-use rand::prelude::*;   // for thread_rng() and SliceRandom
+use rand::prelude::*;  
 use std::io;
 use std::env;
-
 
 mod point;
 mod forest;
@@ -88,6 +87,8 @@ fn main() {
     let secret_y=rand::thread_rng().gen_range(0..=y-1);
 
     forest.burn_tree(Point::new(secret_x, secret_y));
+
+    forest.print_trees_percentage();
 
     visualize(&forest, x as u32, y as u32);
 }

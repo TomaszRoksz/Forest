@@ -67,6 +67,26 @@ impl Forest {
         }
     }
 
+    fn _trees_percentage(&self) -> f32 {
+        let total_trees = self.trees.len();
+        let not_burned_trees = self.trees.iter().filter(|tree| tree.state.get() == 't').count();
+
+        let trees_percentage = (not_burned_trees as f32 / total_trees as f32) * 100.0;
+
+        return trees_percentage;
+
+    }
+
+    pub fn get_trees_percentage(&self) -> f32 {
+        return self._trees_percentage();
+    }
+
+    pub fn print_trees_percentage(&self) -> f32 {
+        let percentage = self._trees_percentage();
+        println!("Burned percentage: {:.2}%", percentage);
+        percentage
+    }
+
 
     pub fn display(&self) {
         for tree in &self.trees {
