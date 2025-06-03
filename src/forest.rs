@@ -1,66 +1,63 @@
 use crate::point::Point;
 use crate::tree_state::TreeState;
 
-
-pub struct Tree {
-    pub location: Point,
-    pub state: TreeState,
-}
-
 pub struct Forest {
-    pub trees: Vec<Tree>,
+    grid: Vec<Option<TreeState>>,
+    width: i32,
+    size: usize,
+    tree_state: TreeState,
+    burned_tree_state: TreeState,
+    hitted_tree_state: TreeState,
 }
 
 impl Forest {
-    pub fn new() -> Self {
-        Forest { trees: Vec::new() }
+    pub fn new(width: i32, height: i32) -> Self {
+        let size = (width * height) as usize;
+        Forest {
+            grid: vec![None; size],
+            width,
+            size,
+            tree_state: TreeState::new('t'),
+            burned_tree_state: TreeState::new('b'),
+            hitted_tree_state: TreeState::new('h'),
+        }
     }
 
-    pub fn add_tree(&mut self, location: Point, state: Option<TreeState>) {
-        let state = state.unwrap_or_else(|| TreeState::new('e'));
-        self.trees.push(Tree { location, state });
+    pub fn add_tree(&mut self, location: Point) {
+        let idx = location.x as usize;
+        if idx < self.size {
+            self.grid[idx] = Some(self.tree_state);
+        }
     }
 
-
-    pub fn get_trees(&self) -> &Vec<Tree> {
-        &self.trees
+    pub fn get_grid(&self) -> &Vec<Option<TreeState>> {
+        &self.grid
     }
 
-    pub fn plant_tree(&mut self, location: Point) {
-        for tree in &mut self.trees {
-            if tree.location == location {
-                if tree.state.get() == 'e' {
-                    tree.state = TreeState::new('t');
-                }
-                return;
-            }
+    pub fn burn_tree(&mut self, location: Point, width: i32) {
+        let idx = location.x as usize;
+        if self.grid[idx].is_none() {
+            self.add_tree(location);
+            self.grid[idx] = Some(self.hitted_tree_state);
+            return;
         }
 
-        self.add_tree(location, Some(TreeState::new('t')));
-    }
-
-     pub fn burn_tree(&mut self, location: Point) {
+        self.grid[idx] = Some(self.hitted_tree_state);
         let mut stack = Vec::new();
+        stack.push(location);
 
-        let hit_existing = if let Some(start) = self.trees.iter_mut().find(|tr| tr.location == location) {
-            start.state = TreeState::new('h');
-            true
-        } else {
-            self.trees.push(Tree { location, state: TreeState::new('h') });
-            false
-        };
-
-        if hit_existing {
-            stack.push(location);
-            while let Some(pt) = stack.pop() {
-                let deltas = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-                for (dx, dy) in deltas.iter().cloned() {
-                    let neighbor = Point::new(pt.x + dx, pt.y + dy);
-                    if let Some(tree) = self.trees.iter_mut().find(|tr| tr.location == neighbor) {
-                        if tree.state.get() == 't' {
-                            tree.state = TreeState::new('b');
-                            stack.push(neighbor);
-                        }
+        while let Some(pt) = stack.pop() {
+            let deltas = [-1, -width, 1, width];
+            for &dx in deltas.iter() {
+                let new_x = pt.x + dx;
+                if new_x < 0 || new_x >= self.size as i32 {
+                    continue;
+                }
+                let neighbor_idx = new_x as usize;
+                if let Some(state) = self.grid[neighbor_idx] {
+                    if state.get() == 't' {
+                        self.grid[neighbor_idx] = Some(self.burned_tree_state);
+                        stack.push(Point::new(new_x));
                     }
                 }
             }
@@ -68,30 +65,26 @@ impl Forest {
     }
 
     fn _trees_percentage(&self) -> f32 {
-        let total_trees = self.trees.len();
-        let not_burned_trees = self.trees.iter().filter(|tree| tree.state.get() == 't').count();
-
-        let trees_percentage = (not_burned_trees as f32 / total_trees as f32) * 100.0;
-
-        return trees_percentage;
-
+        let total_trees = self.grid.iter().filter(|&&t| t.is_some()).count();
+        let not_burned_trees = self
+            .grid
+            .iter()
+            .filter(|&&t| t.map_or(false, |s| s.get() == 't'))
+            .count();
+        if total_trees == 0 {
+            0.0
+        } else {
+            (not_burned_trees as f32 / total_trees as f32) * 100.0
+        }
     }
 
     pub fn get_trees_percentage(&self) -> f32 {
-        return self._trees_percentage();
+        self._trees_percentage()
     }
 
     pub fn print_trees_percentage(&self) -> f32 {
         let percentage = self._trees_percentage();
-        println!("Burned percentage: {:.2}%", percentage);
+        println!("Percentage of unburned trees: {:.2}%", percentage);
         percentage
     }
-
-
-    pub fn display(&self) {
-        for tree in &self.trees {
-                        println!("{} is {}", tree.location, tree.state);
-        }
-    }
-
 }

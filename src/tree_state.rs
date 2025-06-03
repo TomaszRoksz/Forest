@@ -22,7 +22,6 @@ impl TreeState {
 impl fmt::Display for TreeState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let word = match self.tree_state {
-            'e' => "Empty",
             't' => "Tree",
             'b' => "Burning",
             'h' => "Hitted",
@@ -38,8 +37,8 @@ impl fmt::Debug for TreeState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "TreeState('{}' => {})",
-            self.tree_state, self
+            "TreeState('{}')",
+            self.tree_state
         )
     }
 }

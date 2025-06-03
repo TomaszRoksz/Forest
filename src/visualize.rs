@@ -6,42 +6,34 @@ pub fn visualize(forest: &Forest, grid_cols: u32, grid_rows: u32) {
         .fullscreen(true)
         .exit_on_esc(true)
         .build()
-        .expect("Nie udało się zbudować PistonWindow");
+        .expect("Failed to build PistonWindow");
 
     while let Some(event) = window.next() {
         let Size { width: win_w, height: win_h } = window.size();
-
         let cell_w = win_w as f64 / grid_cols as f64;
         let cell_h = win_h as f64 / grid_rows as f64;
-        
-        let cell_size: f64;
-
-        if cell_w != cell_h {
-            cell_size = cell_w.min(cell_h);
-        } 
-        else {
-            cell_size = cell_w;
-        }
+        let cell_size = cell_w.min(cell_h);
+        let total_w = cell_size * grid_cols as f64;
+        let total_h = cell_size * grid_rows as f64;
+        let offset_x = (win_w as f64 - total_w) / 2.0;
+        let offset_y = (win_h as f64 - total_h) / 2.0;
 
         window.draw_2d(&event, |c, g, _device| {
             clear([1.0, 1.0, 1.0, 1.0], g);
-
-            for tree in forest.get_trees() {
-                let x = tree.location.x as f64 * cell_size;
-                let y = tree.location.y as f64 * cell_size;
-                let color = match tree.state.get() {
-                    'e' => [0.8, 0.8, 0.8, 1.0],
-                    't' => [0.0, 1.0, 0.0, 1.0],
-                    'b' => [1.0, 0.0, 0.0, 1.0],
-                    'h' => [0.0, 0.0, 1.0, 1.0],
-                    _   => [1.0, 0.0, 1.0, 1.0],
-                };
-                rectangle(
-                    color,
-                    [x, y, cell_size, cell_size],
-                    c.transform,
-                    g,
-                );
+            for (idx, &state_option) in forest.get_grid().iter().enumerate() {
+                if let Some(state) = state_option {
+                    let col = (idx % grid_cols as usize) as f64;
+                    let row = (idx / grid_cols as usize) as f64;
+                    let px = offset_x + col * cell_size;
+                    let py = offset_y + row * cell_size;
+                    let color = match state.get() {
+                        't' => [0.0, 1.0, 0.0, 1.0], // Green
+                        'b' => [1.0, 0.0, 0.0, 1.0], // Red
+                        'h' => [0.0, 0.0, 1.0, 1.0], // Blue
+                        _ => [1.0, 0.0, 1.0, 1.0], // Magenta
+                    };
+                    rectangle(color, [px, py, cell_size, cell_size], c.transform, g);
+                }
             }
         });
     }
