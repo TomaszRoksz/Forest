@@ -3,7 +3,6 @@ use crate::tree_state::TreeState;
 
 pub struct Forest {
     grid: Vec<Option<TreeState>>,
-    width: i32,
     size: usize,
     tree_state: TreeState,
     burned_tree_state: TreeState,
@@ -15,7 +14,6 @@ impl Forest {
         let size = (width * height) as usize;
         Forest {
             grid: vec![None; size],
-            width,
             size,
             tree_state: TreeState::new('t'),
             burned_tree_state: TreeState::new('b'),
@@ -32,6 +30,12 @@ impl Forest {
 
     pub fn get_grid(&self) -> &Vec<Option<TreeState>> {
         &self.grid
+    }
+
+    pub fn clear(&mut self) {
+        for cell in self.grid.iter_mut() {
+            *cell = None;
+        }
     }
 
     pub fn burn_tree(&mut self, location: Point, width: i32) {
@@ -64,7 +68,7 @@ impl Forest {
         }
     }
 
-    fn _trees_percentage(&self) -> f32 {
+    fn _trees_percentage(&self, afforestation: f32) -> f32 {
         let total_trees = self.grid.iter().filter(|&&t| t.is_some()).count();
         let not_burned_trees = self
             .grid
@@ -74,17 +78,12 @@ impl Forest {
         if total_trees == 0 {
             0.0
         } else {
-            (not_burned_trees as f32 / total_trees as f32) * 100.0
+            not_burned_trees as f32 / total_trees as f32 * afforestation
         }
     }
 
-    pub fn get_trees_percentage(&self) -> f32 {
-        self._trees_percentage()
-    }
-
-    pub fn print_trees_percentage(&self) -> f32 {
-        let percentage = self._trees_percentage();
-        println!("Percentage of unburned trees: {:.2}%", percentage);
-        percentage
+    pub fn get_trees_percentage(&self, afforestation: f32) -> f32 {
+        self._trees_percentage(afforestation)
     }
 }
+
