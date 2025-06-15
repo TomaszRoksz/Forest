@@ -2,12 +2,12 @@ use piston_window::*;
 use crate::forest::Forest;
 
 pub fn visualize(forest: &Forest, grid_cols: u32, grid_rows: u32) {
-    let mut window: PistonWindow = WindowSettings::new("Forest Visualizer", [0, 0])
-        .fullscreen(true)
+    let window_size = [800, 600];
+    let mut window: PistonWindow = WindowSettings::new("Forest Visualizer", window_size)
         .exit_on_esc(true)
         .build()
-        .expect("Failed to build PistonWindow");
-
+        .unwrap_or_else(|e| panic!("Failed to build PistonWindow: {}", e));
+    
     while let Some(event) = window.next() {
         let Size { width: win_w, height: win_h } = window.size();
         let cell_w = win_w as f64 / grid_cols as f64;
